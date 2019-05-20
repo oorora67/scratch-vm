@@ -353,7 +353,9 @@ class EV3Motor {
         //this.coastAfter(milliseconds);
     }
     motormovestop(){
-        let speed = 0;
+        let speed = this._power;
+        const dir = (this.direction < 0) ? 0x100 - speed : speed;
+        //let speed = 0;
         //const dir = (this.direction < 0) ? 0x100 - speed : speed;
         const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
@@ -362,7 +364,7 @@ class EV3Motor {
                 0x00,
                 0x06,
                 0x81,
-                speed & 0xff,
+                dir & 0xff,
                 0x00,
                 0x82,
                 0x03,
@@ -1441,6 +1443,8 @@ class Scratch3Ev3Blocks {
         this._forEachMotor(port, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
+                motor.direction = 1;
+                motor.power = 0;
                 motor.motormovestop();
             }
         });
