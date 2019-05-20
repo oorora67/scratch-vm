@@ -354,7 +354,7 @@ class EV3Motor {
     }
     motormovestop(){
         let speed = 0;
-        //const dir = (this.direction < 0) ? 0x100 - speed : speed;
+        const dir = (this.direction < 0) ? 0x100 - speed : speed;
         const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
@@ -362,7 +362,7 @@ class EV3Motor {
                 0x00,
                 0x06,
                 0x81,
-                speed & 0xff,
+                dir & 0xff,
                 0x00,
                 0x82,
                 0x03,
