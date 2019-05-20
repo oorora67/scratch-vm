@@ -352,6 +352,37 @@ class EV3Motor {
         //this.coastAfter(milliseconds);
         //this.coastAfter(milliseconds);
     }
+    motormovestop(){
+        let speed = 0;
+        //const dir = (this.direction < 0) ? 0x100 - speed : speed;
+        const cmd = this._parent.generateCommand(
+            Ev3Command.DIRECT_COMMAND_NO_REPLY,
+            [
+                0xAE,
+                0x00,
+                0x06,
+                0x81,
+                speed & 0xff,
+                0x00,
+                0x82,
+                0x03,
+                0x82,
+                0xB4,
+                0x00,
+                0x01
+                //0xA4,
+                //0x00, // port output bit field
+                //0x06,
+                
+            ]
+        );
+
+        this._parent.send(cmd);
+        //console.log("SENT PORT:",port);
+        console.log("SENT:",cmd);
+        //this.coastAfter(milliseconds);
+        //this.coastAfter(milliseconds);
+    }
     turnOnFor2 (milliseconds) {
         const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
@@ -1404,7 +1435,7 @@ class Scratch3Ev3Blocks {
             this._forEachMotor(port, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
-                    motor.coast();
+                    motor.motormovestop();
                 }
             });
 
