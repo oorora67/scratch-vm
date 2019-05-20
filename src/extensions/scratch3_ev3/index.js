@@ -360,21 +360,10 @@ class EV3Motor {
         const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
-                0xAE,
-                0x00,
-                0x06,
-                0x81,
-                dir & 0xff,
-                0x00,
-                0x82,
-                0x03,
-                0x82,
-                0xB4,
-                0x00,
-                0x01
-                //0xA4,
-                //0x00, // port output bit field
-                //0x06,
+                Ev3Opcode.OPOUTPUT_STOP,
+                Ev3Value.LAYER,
+                0x06, // port output bit field
+                Ev3Value.COAST
                 
             ]
         );
