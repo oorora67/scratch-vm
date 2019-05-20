@@ -11,6 +11,7 @@ const BlockType = require('./block-type');
 const builtinExtensions = {
     // This is an example that isn't loaded with the other core blocks,
     // but serves as a reference for loading core blocks as extensions.
+    //ev3npit: () => require('../extensions/scratch3_ev3_NPIT'),
     coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
     pen: () => require('../extensions/scratch3_pen'),

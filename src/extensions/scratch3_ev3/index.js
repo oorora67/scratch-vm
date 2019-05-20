@@ -38,6 +38,7 @@ const Ev3Command = {
 const Ev3Opcode = {
     OPOUTPUT_STEP_SPEED: 0xAE,
     OPOUTPUT_TIME_SPEED: 0xAF,
+    OPOUTPUT_START: 0xA5,
     OPOUTPUT_STOP: 0xA3,
     OPOUTPUT_RESET: 0xA2,
     OPOUTPUT_STEP_SYNC: 0xB0,
@@ -315,8 +316,71 @@ class EV3Motor {
         );
 
         this._parent.send(cmd);
-
+        console.log("SENT:",cmd);
         this.coastAfter(milliseconds);
+    }
+    movedirection () {
+        //if (this._power === 0) return;
+        let speed = this._power;
+        const dir = (this.direction < 0) ? 0x100 - speed : speed;
+        const cmd = this._parent.generateCommand(
+            Ev3Command.DIRECT_COMMAND_NO_REPLY,
+            [
+                
+                0xAE,
+                0x00,
+                0x06,
+                0x81,
+                dir & 0xff,
+                0x00,
+                0x82,
+                0x03,
+                0x82,
+                0xB4,
+                0x00,
+                0x01
+                //0xA4,
+                //0x00, // port output bit field
+                //0x06,
+                
+            ]
+        );
+
+        this._parent.send(cmd);
+        //console.log("SENT PORT:",port);
+        console.log("SENT:",cmd);
+        //this.coastAfter(milliseconds);
+        //this.coastAfter(milliseconds);
+    }
+    turnOnFor2 (milliseconds) {
+        const cmd = this._parent.generateCommand(
+            Ev3Command.DIRECT_COMMAND_NO_REPLY,
+            [
+                
+                0xAE,
+                0x00,
+                0x06,
+                0x81,
+                0x32,
+                0x00,
+                0x82,
+                0x03,
+                0x82,
+                0xB4,
+                0x00,
+                0x01
+                //0xA4,
+                //0x00, // port output bit field
+                //0x06,
+                
+            ]
+        );
+
+        this._parent.send(cmd);
+        //console.log("SENT PORT:",port);
+        console.log("SENT:",cmd);
+        //this.coastAfter(milliseconds);
+        //this.coastAfter(milliseconds);
     }
 
     /**
@@ -358,6 +422,7 @@ class EV3Motor {
         );
 
         this._parent.send(cmd);
+        console.log("SENT:",cmd);
     }
 
     /**
@@ -840,7 +905,7 @@ class EV3 {
                     this._sensors.buttons[i] = value ? value : 0;
                 } else if (Ev3Label[this._sensorPorts[i]]) { // if valid
                     // Read brightness / distance values and set to 0 if null
-                    this._sensors[Ev3Label[this._sensorPorts[i]]] = value ? value : 0;
+                    this._sensors[Ev3Label[this._sensorPorts[i]]] = value ? value : 1;
                 }
                 offset += 4;
             }
@@ -895,6 +960,22 @@ const Ev3MotorMenu = ['A', 'B', 'C', 'D'];
  */
 const Ev3SensorMenu = ['1', '2', '3', '4'];
 
+/**
+ * Enum for direction names.
+ * Note: if changed, will break compatibility with previously saved projects.
+ * @readonly
+ * @enum {string}
+ */
+const Ev3DirectionMenu = ['Forward', 'Back'];
+
+/**
+ * Enum for direction names.
+ * Note: if changed, will break compatibility with previously saved projects.
+ * @readonly
+ * @enum {string}
+ */
+const Ev3DirectionMenuJp = ['前', '後'];
+
 class Scratch3Ev3Blocks {
 
     /**
@@ -931,10 +1012,39 @@ class Scratch3Ev3Blocks {
     getInfo () {
         return {
             id: Scratch3Ev3Blocks.EXTENSION_ID,
-            name: 'LEGO EV3',
+            name: 'LEGO EV3 NPIT Ver',
             blockIconURI: blockIconURI,
             showStatusButton: true,
             blocks: [
+                {
+                    opcode: 'movedirection',
+                    text: formatMessage({
+                        id: 'ev3.movedirection',
+                        default: '[DIRECTION] 方向に [SPEED] %のスピードで進む',
+                        description: 'ev3 move '
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'directionmenu',
+                            defaultValue: 0
+                        },
+                        SPEED: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'movestop',
+                    text: formatMessage({
+                        id: 'ev3.movestop',
+                        default: '停止する',
+                        description: 'ev3 move stop'
+                    }),
+                    blockType: BlockType.COMMAND,
+                },
                 {
                     opcode: 'motorTurnClockwise',
                     text: formatMessage({
@@ -1109,11 +1219,12 @@ class Scratch3Ev3Blocks {
                             defaultValue: 0.5
                         }
                     }
-                }
+                },
             ],
             menus: {
                 motorPorts: this._formatMenu(Ev3MotorMenu),
-                sensorPorts: this._formatMenu(Ev3SensorMenu)
+                sensorPorts: this._formatMenu(Ev3SensorMenu),
+                directionmenu: this._formatMenu(Ev3DirectionMenuJp)
             }
         };
     }
@@ -1250,7 +1361,57 @@ class Scratch3Ev3Blocks {
             setTimeout(resolve, time);
         });
     }
+    movedirection (args) {
+        var movdir = 1;
+        switch (Cast.toNumber(args.DIRECTION)) {
+            case 0:
+                movdir = 1;
+                console.log("movemotor" ,movdir);
+                break;
+            case 1:
+                movdir = -1;
+                console.log("movemotor" ,movdir);
+                break;
+            default:
+                movdir = 0;
+                console.log("error" ,movdir);
+                break;
+            }
+        //const movdir = (Cast.toNumber(args.DIRECTION)- 1)* -1;
+        const speed = Cast.toNumber(args.SPEED);
+        const port = 1;
+        let time =  1000;
 
+        return new Promise(resolve => {
+            this._forEachMotor(port, motorIndex => {
+                const motor = this._peripheral.motor(motorIndex);
+                if (motor) {
+                    motor.direction = movdir;
+                    motor.power = speed;
+                    motor.movedirection();
+                }
+            });
+
+            // Run for some time even when no motor is connected
+            setTimeout(resolve, time);
+        });
+    }
+    movestop(){
+        const port = 1;
+        let time =  1000;
+
+        return new Promise(resolve => {
+            this._forEachMotor(port, motorIndex => {
+                const motor = this._peripheral.motor(motorIndex);
+                if (motor) {
+                    motor.coast();
+                }
+            });
+
+            // Run for some time even when no motor is connected
+            setTimeout(resolve, time);
+        });
+    }
     /**
      * Call a callback for each motor indexed by the provided motor ID.
      * @param {MotorID} motorID - the ID specifier.
