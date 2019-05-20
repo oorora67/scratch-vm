@@ -362,7 +362,7 @@ class EV3Motor {
                 0x00,
                 0x06,
                 0x81,
-                speed,
+                speed & 0xff,
                 0x00,
                 0x82,
                 0x03,
