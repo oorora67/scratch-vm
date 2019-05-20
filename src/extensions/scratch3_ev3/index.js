@@ -331,7 +331,7 @@ class EV3Motor {
                 0x00,
                 0x06,
                 0x81,
-                dir & 0xff,
+                dir ,
                 0x00,
                 0x82,
                 0x03,
@@ -354,7 +354,7 @@ class EV3Motor {
     }
     motormovestop(){
         let speed = 0;
-        const dir = (this.direction < 0) ? 0x100 - speed : speed;
+        //const dir = (this.direction < 0) ? 0x100 - speed : speed;
         const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
@@ -362,7 +362,7 @@ class EV3Motor {
                 0x00,
                 0x06,
                 0x81,
-                dir & 0xff,
+                speed,
                 0x00,
                 0x82,
                 0x03,
@@ -1438,7 +1438,13 @@ class Scratch3Ev3Blocks {
     movestop(){
         const port = 1;
         let time =  1000;
-
+        this._forEachMotor(port, motorIndex => {
+            const motor = this._peripheral.motor(motorIndex);
+            if (motor) {
+                motor.motormovestop();
+            }
+        });
+        /*
         return new Promise(resolve => {
             this._forEachMotor(port, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
@@ -1449,7 +1455,7 @@ class Scratch3Ev3Blocks {
 
             // Run for some time even when no motor is connected
             setTimeout(resolve, time);
-        });
+        });*/
     }
     /**
      * Call a callback for each motor indexed by the provided motor ID.
