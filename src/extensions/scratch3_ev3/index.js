@@ -1412,8 +1412,16 @@ class Scratch3Ev3Blocks {
         const speed = Cast.toNumber(args.SPEED);
         const port = 1;
         let time =  1000;
-
-        return new Promise(resolve => {
+        
+        this._forEachMotor(port, motorIndex => {
+            const motor = this._peripheral.motor(motorIndex);
+            if (motor) {
+                motor.direction = movdir;
+                motor.power = speed;
+                motor.movedirection();
+            }
+        });
+        /*return new Promise(resolve => {
             this._forEachMotor(port, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
@@ -1425,7 +1433,7 @@ class Scratch3Ev3Blocks {
 
             // Run for some time even when no motor is connected
             setTimeout(resolve, time);
-        });
+        });*/
     }
     movestop(){
         const port = 1;
