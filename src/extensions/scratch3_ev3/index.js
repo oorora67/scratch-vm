@@ -352,6 +352,39 @@ class EV3Motor {
         //this.coastAfter(milliseconds);
         //this.coastAfter(milliseconds);
     }
+    selectmotoron (port) {
+        //if (this._power === 0) return;
+        let speed = this._power;
+        const dir = (this.direction < 0) ? 0x100 - speed : speed;
+        const cmd = this._parent.generateCommand(
+            Ev3Command.DIRECT_COMMAND_NO_REPLY,
+            [
+                
+                0xAE,
+                0x00,
+                port,
+                0x81,
+                dir ,
+                0x00,
+                0x82,
+                0x03,
+                0x82,
+                0xB4,
+                0x00,
+                0x01
+                //0xA4,
+                //0x00, // port output bit field
+                //0x06,
+                
+            ]
+        );
+
+        this._parent.send(cmd);
+        //console.log("SENT PORT:",port);
+        console.log("SENT:",cmd);
+        //this.coastAfter(milliseconds);
+        //this.coastAfter(milliseconds);
+    }
     motormovestop(){
         let speed = this._power;
         const dir = (this.direction < 0) ? 0x100 - speed : speed;
@@ -997,6 +1030,14 @@ const Ev3DirectionMenu = ['Forward', 'Back'];
  * @enum {string}
  */
 const Ev3DirectionMenuJp = ['前', '後'];
+/**
+ * Enum for direction names.
+ * Note: if changed, will break compatibility with previously saved projects.
+ * @readonly
+ * @enum {string}
+ */
+const Ev3CurvedirectionMenuJp = ['右前', '左前','右後', '左後'];
+
 
 class Scratch3Ev3Blocks {
 
@@ -1066,6 +1107,47 @@ class Scratch3Ev3Blocks {
                         description: 'ev3 move stop'
                     }),
                     blockType: BlockType.COMMAND,
+                },
+                {
+                    opcode: 'selectmotoron',
+                    text: formatMessage({
+                        id: 'ev3.selectmotoron',
+                        default: 'モータ [PORT] を [DIRECTION] 方向に [SPEED] %のスピードで回す',
+                        description: 'ev3 move '
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        PORT: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorPorts',
+                            defaultValue: 0
+                        },
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'directionmenu',
+                            defaultValue: 0
+                        },
+                        SPEED: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },
+                {
+                    opcode: 'selectcurve',
+                    text: formatMessage({
+                        id: 'ev3.selectcurve',
+                        default: '[CURVEDIRECTION] 方向に進む',
+                        description: 'ev3 move '
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        CURVEDIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'curvedirectionmenu',
+                            defaultValue: 0
+                        }
+                    }
                 },
                 {
                     opcode: 'motorTurnClockwise',
@@ -1246,7 +1328,8 @@ class Scratch3Ev3Blocks {
             menus: {
                 motorPorts: this._formatMenu(Ev3MotorMenu),
                 sensorPorts: this._formatMenu(Ev3SensorMenu),
-                directionmenu: this._formatMenu(Ev3DirectionMenuJp)
+                directionmenu: this._formatMenu(Ev3DirectionMenuJp),
+                curvedirectionmenu: this._formatMenu(Ev3CurvedirectionMenuJp)
             }
         };
     }
@@ -1450,6 +1533,128 @@ class Scratch3Ev3Blocks {
             setTimeout(resolve, time);
         });*/
     }
+    selectmotoron (args) {
+        var movdir = 1;
+        switch (Cast.toNumber(args.DIRECTION)) {
+            case 0:
+                movdir = 1;
+                console.log("movemotor" ,movdir);
+                break;
+            case 1:
+                movdir = -1;
+                console.log("movemotor" ,movdir);
+                break;
+            default:
+                movdir = 0;
+                console.log("error" ,movdir);
+                break;
+        }
+        var port = 0x02;
+        switch (Cast.toNumber(args.PORT)) {
+            case 0:
+                port = 0x01;
+                console.log("movemotor" ,port);
+                break;
+            case 1:
+                port = 0x02;
+                console.log("movemotor" ,port);
+                break;
+            case 2:
+                port = 0x04;
+                console.log("movemotor" ,port);
+                break;
+            case 3:
+                port = 0x08;
+                console.log("movemotor" ,port);
+                break;
+            default:
+                movdir = 0x00;
+                console.log("error" ,port);
+                break;
+        }
+        //const movdir = (Cast.toNumber(args.DIRECTION)- 1)* -1;
+        const speed = Cast.toNumber(args.SPEED);
+        //const port = 1;
+        let time =  1000;
+        
+        this._forEachMotor(1, motorIndex => {
+            const motor = this._peripheral.motor(motorIndex);
+            if (motor) {
+                motor.direction = movdir;
+                motor.power = speed;
+                motor.selectmotoron(port);
+            }
+        });
+    }
+
+    selectcurve(args){
+        var movdir = 1;
+        var speedLow = 30;
+        var speedHigh = 50;
+        switch (Cast.toNumber(args.CURVEDIRECTION)) {
+            case 0:
+                movdir = 1;
+                this._forEachMotor(1, motorIndex => {
+                    const motor = this._peripheral.motor(motorIndex);
+                    if (motor) {
+                        motor.direction = movdir;
+                        motor.power = speedHigh;
+                        motor.selectmotoron(0x02);
+                        motor.power = speedLow;
+                        motor.selectmotoron(0x04);
+                    }
+                });
+                console.log("selectcurve1");
+                break;
+            case 1:
+                    movdir = 1;
+                    this._forEachMotor(1, motorIndex => {
+                        const motor = this._peripheral.motor(motorIndex);
+                        if (motor) {
+                            motor.direction = movdir;
+                            motor.power = speedHigh;
+                            motor.selectmotoron(0x04);
+                            motor.power = speedLow;
+                            motor.selectmotoron(0x02);
+                        }
+                    });
+                    console.log("selectcurve1");
+                    break;
+            case 2:
+                    movdir = -1;
+                    this._forEachMotor(1, motorIndex => {
+                        const motor = this._peripheral.motor(motorIndex);
+                        if (motor) {
+                            motor.direction = movdir;
+                            motor.power = speedHigh;
+                            motor.selectmotoron(0x02);
+                            motor.power = speedLow;
+                            motor.selectmotoron(0x04);
+                        }
+                    });
+                    console.log("selectcurve1");
+                    break;
+            case 3:
+                    movdir = -1;
+                    this._forEachMotor(1, motorIndex => {
+                        const motor = this._peripheral.motor(motorIndex);
+                        if (motor) {
+                            motor.direction = movdir;
+                            motor.power = speedHigh;
+                            motor.selectmotoron(0x04);
+                            motor.power = speedLow;
+                            motor.selectmotoron(0x02);
+                        }
+                    });
+                    console.log("selectcurve1");
+                    break;
+            default:
+                movdir = 0;
+                console.log("error" ,movdir);
+                break;
+        }
+    }
+
     /**
      * Call a callback for each motor indexed by the provided motor ID.
      * @param {MotorID} motorID - the ID specifier.
