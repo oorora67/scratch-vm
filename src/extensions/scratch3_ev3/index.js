@@ -1152,8 +1152,8 @@ class Scratch3Ev3Blocks {
                 {
                     opcode: 'motorTurnClockwise',
                     text: formatMessage({
-                        id: 'ev3.motorTurnClockwise',
-                        default: 'motor [PORT] turn this way [POWER] for [TIME] seconds',
+                        id: 'ev3.motorTurnClockwise_custom',
+                        default: 'モータ [PORT] を [POWER] %の速度で [TIME] 秒間、前方向に回す',
                         description: 'turn a motor clockwise for some time'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1176,8 +1176,8 @@ class Scratch3Ev3Blocks {
                 {
                     opcode: 'motorTurnCounterClockwise',
                     text: formatMessage({
-                        id: 'ev3.motorTurnCounterClockwise',
-                        default: 'motor [PORT] turn that way [POWER] for [TIME] seconds',
+                        id: 'ev3.motorTurnCounterClockwisecustom_',
+                        default: 'モータ [PORT] を [POWER] %の速度で [TIME] 秒間、後方向に回す',
                         description: 'turn a motor counter-clockwise for some time'
                     }),
                     blockType: BlockType.COMMAND,
