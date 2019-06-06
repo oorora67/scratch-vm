@@ -1153,7 +1153,7 @@ class Scratch3Ev3Blocks {
                     opcode: 'motorTurnClockwise',
                     text: formatMessage({
                         id: 'ev3.motorTurnClockwise',
-                        default: 'motor [PORT] turn this way for [TIME] seconds',
+                        default: 'motor [PORT] turn this way [POWER] for [TIME] seconds',
                         description: 'turn a motor clockwise for some time'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1166,6 +1166,10 @@ class Scratch3Ev3Blocks {
                         TIME: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
+                        },
+                        POWER: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 100
                         }
                     }
                 },
@@ -1173,7 +1177,7 @@ class Scratch3Ev3Blocks {
                     opcode: 'motorTurnCounterClockwise',
                     text: formatMessage({
                         id: 'ev3.motorTurnCounterClockwise',
-                        default: 'motor [PORT] turn that way for [TIME] seconds',
+                        default: 'motor [PORT] turn that way [POWER] for [TIME] seconds',
                         description: 'turn a motor counter-clockwise for some time'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1186,6 +1190,10 @@ class Scratch3Ev3Blocks {
                         TIME: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
+                        },
+                        POWER: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 100
                         }
                     }
                 },
@@ -1337,12 +1345,14 @@ class Scratch3Ev3Blocks {
     motorTurnClockwise (args) {
         const port = Cast.toNumber(args.PORT);
         let time = Cast.toNumber(args.TIME) * 1000;
+        const power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
         time = MathUtil.clamp(time, 0, 15000);
 
         return new Promise(resolve => {
             this._forEachMotor(port, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
+                    motor.power = power;
                     motor.direction = 1;
                     motor.turnOnFor(time);
                 }
@@ -1356,12 +1366,14 @@ class Scratch3Ev3Blocks {
     motorTurnCounterClockwise (args) {
         const port = Cast.toNumber(args.PORT);
         let time = Cast.toNumber(args.TIME) * 1000;
+        const power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
         time = MathUtil.clamp(time, 0, 15000);
 
         return new Promise(resolve => {
             this._forEachMotor(port, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
+                    motor.power = power;
                     motor.direction = -1;
                     motor.turnOnFor(time);
                 }
